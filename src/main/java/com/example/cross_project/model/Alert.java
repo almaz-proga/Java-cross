@@ -5,7 +5,14 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.cglib.core.Local;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 public class Alert {
     private Long id;
     private Sensor sensor;
@@ -15,23 +22,6 @@ public class Alert {
     private StatusType status;
     private List<String> photoUrls;
 
-    public Alert(Long id, Sensor sensor, EventType type, LocalDateTime timetamp, String description, StatusType status, List<String> photoUrls) {
-        this.id = id;
-        this.sensor = sensor;
-        this.type = type;
-        this.timetamp = timetamp;
-        this.description = description;
-        this.status = status;
-        this.photoUrls = photoUrls;
-    }
-    public Long getId() { return id; }
-    public Sensor getSensor() { return sensor; }
-    public EventType getEventType() {return type; }
-    public LocalDateTime getLocalDateTime() {return timetamp; }
-    public StatusType getStatusType() {return status;}
-    public List<String> getPhotoUrls() {return photoUrls; }
-
-    public void setId(Long id) { this.id = id; }
     public void setTimestamp(LocalDateTime timestamp) { this.timetamp = timestamp; }
 }
 
