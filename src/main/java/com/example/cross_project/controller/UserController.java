@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 
 
 @RestController
+@RequestMapping("/api")
 public class UserController {
     public static List<User> users = new ArrayList<>(Arrays.asList(
             new User(1L, "Anton", "1234", true, Set.of(new Role(1L, "ADMIN", Set.of(new Permission(1L, "READ"), new Permission(2L, "WRITE"))))
