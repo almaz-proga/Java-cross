@@ -1,64 +1,60 @@
 package com.example.cross_project.controller;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.cross_project.model.Alert;
-import com.example.cross_project.model.EventType;
-import com.example.cross_project.model.StatusType;
+import com.example.cross_project.service.AlertService;
+
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping;
+
 
 
 @RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
 public class AlertController {
-     private List<Alert> alerts = new ArrayList<>(Arrays.asList(
-        new Alert(1L,
-                SensorController.sensors.get(0),
-                EventType.ACCIDENT,
-                LocalDateTime.now(),
-                "Car accident detected",
-                StatusType.NEW,
-                List.of("photo1.jpg", "photo2.jpg")),
-        new Alert(2L,
-                SensorController.sensors.get(1), 
-                EventType.BUTTON,
-                LocalDateTime.now(),
-                "Emergency button pressed",
-                StatusType.IN_PROGRESS,
-                List.of("button.jpg"))
-    ));
+     private final AlertService alertService;
 
     @GetMapping("/alerts")
-    public List<Alert> getAlerts() {
-        return alerts;
+    public List<Alert> getAllAlerts(){
+        return alertService.getAll();
     }
 
     @GetMapping("/alerts/{id}")
-    public ResponseEntity<Alert> getAlert(@PathVariable Long id) {
-        return alerts.stream()
-                .filter(alert -> alert.getId().equals(id))
-                .findFirst()
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping("/alerts")
-    public ResponseEntity<Alert> addAlert(@RequestBody Alert alert) {
-        alert.setId((long) alerts.size() + 1);
-        alert.setTimestamp(LocalDateTime.now()); 
-        alerts.add(alert);
-        return ResponseEntity.status(HttpStatus.CREATED).body(alert);
+    public ResponseEntity<Alert> getAlertById(@PathVariable Long id) {
+        return alertService.getById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
     
+    @PostMapping("/alerts")
+    public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
+        Alert created = alertService.create(alert);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+    
+    @PutMapping("/alerts/{id}")
+    public ResponseEntity<Alert> updateAlert(@PathVariable Long id, @RequestBody Alert alert){
+        return alertService.update(id, alert)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/alerts/{id}")
+    public ResponseEntity<Void> deleteAlert(@PathVariable Long id){
+        boolean deleted = alertService.deleteById(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
 }

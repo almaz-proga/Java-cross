@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>События (Alerts)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #eee;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button.delete {
+            background: #dc3545;
+        }
+        form {
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        input, select, textarea {
+            padding: 8px;
+            margin-right: 10px;
+            width: 180px;
+        }
+        textarea {
+            width: 300px;
+            height: 60px;
+        }
+    </style>
+</head>
+<body>
+<h1>Мониторинг оповещений</h1>
+
+<form id="alertForm">
+    <input type="hidden" id="alertId">
+    
+    <label>Сенсор:</label>
+    <select id="sensorSelect" required></select>
+    
+    <label>Тип события:</label>
+    <select id="eventType" required>
+        <option value="">Выберите...</option>
+        <option value="ACCIDENT">ACCIDENT</option>
+        <option value="HARD_BRAKING">HARD_BRAKING</option>
+        <option value="BUTTON">BUTTON</option>
+    </select>
+    
+    <label>Статус:</label>
+    <select id="statusSelect" required>
+        <option value="">Выберите...</option>
+        <option value="NEW">NEW</option>
+        <option value="IN_PROGRESS">IN_PROGRESS</option>
+        <option value="RESOLVED">RESOLVED</option>
+    </select>
+
+    <textarea id="description" placeholder="Описание..." required></textarea>
+    
+    <input type="text" id="photoUrls" placeholder="Ссылки на фото (через запятую)">
+    
+    <button type="submit">Сохранить</button>
+</form>
+
+<table id="alertsTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Сенсор</th>
+            <th>Тип</th>
+            <th>Описание</th>
+            <th>Статус</th>
+            <th>Фото</th>
+            <th>Время</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    const apiUrl = '/api/alerts';
+    const sensorsUrl = '/api/sensors';
+    const form = document.getElementById('alertForm');
+    const tableBody = document.querySelector('#alertsTable tbody');
+    const sensorSelect = document.getElementById('sensorSelect');
+    const eventTypeSelect = document.getElementById('eventType');
+    const statusSelect = document.getElementById('statusSelect');
+    const descInput = document.getElementById('description');
+    const photoInput = document.getElementById('photoUrls');
+    const idInput = document.getElementById('alertId');
+
+    async function loadSensors() {
+        const res = await fetch(sensorsUrl);
+        const sensors = await res.json();
+        sensorSelect.innerHTML = '<option value="">Выберите сенсор</option>';
+        sensors.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = `${s.model} (${s.location})`;
+            sensorSelect.appendChild(opt);
+        });
+    }
+
+    async function loadAlerts() {
+        const res = await fetch(apiUrl);
+        const alerts = await res.json();
+        tableBody.innerHTML = '';
+        alerts.forEach(a => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${a.id}</td>
+                <td>${a.sensor ? a.sensor.model + ' (' + a.sensor.location + ')' : '-'}</td>
+                <td>${a.type}</td>
+                <td>${a.description}</td>
+                <td>${a.status}</td>
+                <td>${a.photoUrls ? a.photoUrls.join(', ') : '-'}</td>
+                <td>${a.timestamp ? a.timestamp.replace('T', ' ') : '-'}</td>
+                <td>
+                    <button onclick="editAlert(${a.id})">✏️</button>
+                    <button class="delete" onclick="deleteAlert(${a.id})">🗑️</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    async function editAlert(id) {
+        const res = await fetch(`${apiUrl}/${id}`);
+        const a = await res.json();
+        idInput.value = a.id;
+        sensorSelect.value = a.sensor ? a.sensor.id : '';
+        eventTypeSelect.value = a.type;
+        statusSelect.value = a.status;
+        descInput.value = a.description;
+        photoInput.value = a.photoUrls ? a.photoUrls.join(', ') : '';
+    }
+
+    async function deleteAlert(id) {
+        if (!confirm('Удалить оповещение?')) return;
+        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+        loadAlerts();
+    }
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const alertData = {
+            sensor: { id: parseInt(sensorSelect.value) },
+            type: eventTypeSelect.value,
+            status: statusSelect.value,
+            description: descInput.value,
+            photoUrls: photoInput.value ? photoInput.value.split(',').map(s => s.trim()) : [],
+            timestamp: new Date().toISOString()
+        };
+
+        if (idInput.value) {
+            await fetch(`${apiUrl}/${idInput.value}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(alertData)
+            });
+        } else {
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(alertData)
+            });
+        }
+
+        form.reset();
+        idInput.value = '';
+        loadAlerts();
+    });
+
+    loadSensors();
+    loadAlerts();
+</script>
+</body>
+</html>

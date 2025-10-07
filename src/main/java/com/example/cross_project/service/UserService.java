@@ -1,6 +1,7 @@
 package com.example.cross_project.service;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -23,18 +24,23 @@ public class UserService {
     public List<User> getAllByUsername(String username){
         return userRepository.findAllByUsername(username);
     }
+    
     public User create(User user) {
         return userRepository.save(user);
     }
-    public User getById(Long id){
-        return userRepository.findById(id).orElse(null);
+
+    public Optional<User> getById(Long id){
+        return userRepository.findById(id);
     }
-    public User update(Long id, User user){
-        return userRepository.findById(id).map(existingUser -> {
-            existingUser.setUsername(user.getUsername());
-            existingUser.setPassword(user.getPassword());
-            return userRepository.save(existingUser);
-        }).orElse(null);
+
+    public Optional<User> update(Long id, User userDetails) {
+        return userRepository.findById(id).map(user -> {
+            user.setUsername(userDetails.getUsername());
+            user.setPassword(userDetails.getPassword());
+            user.setEnabled(userDetails.isEnabled());
+            user.setRole(userDetails.getRole());
+            return userRepository.save(user);
+        });
     }
 
     public boolean deleteById(Long id) {

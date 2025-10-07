@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Пользователи</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #eee;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button.delete {
+            background: #dc3545;
+        }
+        form {
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        input, select {
+            padding: 8px;
+            margin-right: 10px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+<h1>Управление пользователями</h1>
+
+<form id="userForm">
+    <input type="hidden" id="userId">
+    <input type="text" id="username" placeholder="Имя пользователя" required>
+    <input type="text" id="password" placeholder="Пароль" required>
+
+    <label for="roleSelect">Роль:</label>
+    <select id="roleSelect" required>
+        <option value="">Выберите роль</option>
+    </select>
+
+    <label>
+        Активен:
+        <input type="checkbox" id="enabled" checked>
+    </label>
+    <button type="submit">Сохранить</button>
+</form>
+
+<table id="usersTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Имя</th>
+        <th>Пароль</th>
+        <th>Роль</th>
+        <th>Активен</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    const apiUrl = '/api/users';
+    const rolesUrl = '/api/roles';
+    const tableBody = document.querySelector('#usersTable tbody');
+    const form = document.getElementById('userForm');
+    const idInput = document.getElementById('userId');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const enabledInput = document.getElementById('enabled');
+    const roleSelect = document.getElementById('roleSelect');
+
+    async function loadRoles() {
+        const res = await fetch(rolesUrl);
+        const roles = await res.json();
+        roleSelect.innerHTML = '<option value="">Выберите роль</option>';
+        roles.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = r.title;
+            roleSelect.appendChild(opt);
+        });
+    }
+
+    async function loadUsers() {
+        const res = await fetch(apiUrl);
+        const users = await res.json();
+        tableBody.innerHTML = '';
+        users.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${u.id}</td>
+                <td>${u.username}</td>
+                <td>${u.password}</td>
+                <td>${u.role ? u.role.title : '-'}</td>
+                <td>${u.enabled ? '✅' : '❌'}</td>
+                <td>
+                    <button onclick="editUser(${u.id})">✏️</button>
+                    <button class="delete" onclick="deleteUser(${u.id})">🗑️</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Удалить пользователя?')) return;
+        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+        loadUsers();
+    }
+
+    async function editUser(id) {
+        const res = await fetch(`${apiUrl}/${id}`);
+        const u = await res.json();
+        idInput.value = u.id;
+        usernameInput.value = u.username;
+        passwordInput.value = ''; // не показываем старый пароль
+        enabledInput.checked = u.enabled;
+        roleSelect.value = u.role ? u.role.id : '';
+    }
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const roleId = roleSelect.value;
+        if (!roleId) {
+            alert('Выберите роль!');
+            return;
+        }
+
+        const user = {
+            username: usernameInput.value,
+            password: passwordInput.value,
+            enabled: enabledInput.checked,
+            role: { id: parseInt(roleId) }
+        };
+
+        if (idInput.value) {
+            await fetch(`${apiUrl}/${idInput.value}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(user)
+            });
+        } else {
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(user)
+            });
+        }
+
+        form.reset();
+        idInput.value = '';
+        loadUsers();
+    });
+
+    loadRoles();
+    loadUsers();
+</script>
+</body>
+</html>
