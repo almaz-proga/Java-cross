@@ -44,13 +44,13 @@ public class SensorController {
     }
     
     @PostMapping("/sensors")
-    public ResponseEntity<Sensor> createSensor(@RequestBody Sensor sensor) {
+    public ResponseEntity<Sensor> createSensor(@Valid  @RequestBody Sensor sensor) {
         Sensor created = sensorService.create(sensor);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
     
     @PutMapping("/sensors/{id}")
-    public ResponseEntity<Sensor> updateSensor(@PathVariable Long id, @RequestBody Sensor sensor){
+    public ResponseEntity<Sensor> updateSensor(@Valid @PathVariable Long id, @RequestBody Sensor sensor){
         return sensorService.update(id, sensor)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());

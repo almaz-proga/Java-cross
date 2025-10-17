@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.cross_project.model.Alert;
 import com.example.cross_project.service.AlertService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -40,7 +41,7 @@ public class AlertController {
     }
     
     @PostMapping("/alerts")
-    public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
+    public ResponseEntity<Alert> createAlert(@Valid @RequestBody Alert alert) {
         Alert created = alertService.create(alert);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

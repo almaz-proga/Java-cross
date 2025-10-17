@@ -17,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,14 +32,13 @@ public class Sensor {
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
     
-    @NotBlank
-    @Column(nullable = false)
+    @NotBlank(message = "model cannot be blank")
     private String model;
     
-    @NotBlank
-    @Column(nullable = false)
+    @NotBlank(message = "local cannot be blank")
     private String location;
 
+    @NotNull(message = "user is required")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User assingnedTo;
