@@ -19,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,22 +35,23 @@ public class Alert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "Sensor cannot be null")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "sensor_id")
     private Sensor sensor;
 
+    @NotNull(message = "Event type is required")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private EventType type;
 
-    @Column(nullable = false)
+    @NotNull(message = "Timestamp is required")
     private LocalDateTime timetamp;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Description cannot be blank")
     private String description;
 
+    @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private StatusType status;
 
     @ElementCollection
