@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Датчики</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #eee;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button.delete {
+            background: #dc3545;
+        }
+        form {
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        input, select {
+            padding: 8px;
+            margin-right: 10px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+<h1>Управление датчиками</h1>
+
+<form id="sensorForm">
+    <input type="hidden" id="sensorId">
+
+    <input type="text" id="model" placeholder="Модель датчика" required>
+    <input type="text" id="location" placeholder="Расположение" required>
+
+    <label for="userSelect">Пользователь:</label>
+    <select id="userSelect" required>
+        <option value="">Выберите пользователя</option>
+    </select>
+
+    <button type="submit">Сохранить</button>
+</form>
+
+<table id="sensorsTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Модель</th>
+        <th>Расположение</th>
+        <th>Назначен пользователю</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    const sensorsUrl = '/api/sensors';
+    const usersUrl = '/api/users';
+    const tableBody = document.querySelector('#sensorsTable tbody');
+    const form = document.getElementById('sensorForm');
+    const idInput = document.getElementById('sensorId');
+    const modelInput = document.getElementById('model');
+    const locationInput = document.getElementById('location');
+    const userSelect = document.getElementById('userSelect');
+
+    // Загружаем пользователей для выпадающего списка
+    async function loadUsers() {
+        const res = await fetch(usersUrl);
+        const users = await res.json();
+        userSelect.innerHTML = '<option value="">Выберите пользователя</option>';
+        users.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.username;
+            userSelect.appendChild(opt);
+        });
+    }
+
+    // Загружаем сенсоры
+    async function loadSensors() {
+        const res = await fetch(sensorsUrl);
+        const sensors = await res.json();
+        tableBody.innerHTML = '';
+        sensors.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${s.id}</td>
+                <td>${s.model}</td>
+                <td>${s.location}</td>
+                <td>${s.assingnedTo ? s.assingnedTo.username : '-'}</td>
+                <td>
+                    <button onclick="editSensor(${s.id})">✏️</button>
+                    <button class="delete" onclick="deleteSensor(${s.id})">🗑️</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Удаление
+    async function deleteSensor(id) {
+        if (!confirm('Удалить датчик?')) return;
+        await fetch(`${sensorsUrl}/${id}`, { method: 'DELETE' });
+        loadSensors();
+    }
+
+    // Редактирование
+    async function editSensor(id) {
+        const res = await fetch(`${sensorsUrl}/${id}`);
+        const s = await res.json();
+        idInput.value = s.id;
+        modelInput.value = s.model;
+        locationInput.value = s.location;
+        userSelect.value = s.assingnedTo ? s.assingnedTo.id : '';
+    }
+
+    // Отправка формы
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+
+        const userId = userSelect.value;
+        if (!userId) {
+            alert('Выберите пользователя!');
+            return;
+        }
+
+        const sensor = {
+            model: modelInput.value,
+            location: locationInput.value,
+            assingnedTo: { id: parseInt(userId) }
+        };
+
+        if (idInput.value) {
+            await fetch(`${sensorsUrl}/${idInput.value}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(sensor)
+            });
+        } else {
+            await fetch(sensorsUrl, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(sensor)
+            });
+        }
+
+        form.reset();
+        idInput.value = '';
+        loadSensors();
+    });
+
+    loadUsers();
+    loadSensors();
+</script>
+</body>
+</html>
