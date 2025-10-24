@@ -95,7 +95,8 @@
     // Загружаем пользователей для выпадающего списка
     async function loadUsers() {
         const res = await fetch(usersUrl);
-        const users = await res.json();
+        const data = await res.json();
+        const users = data.content || data;
         userSelect.innerHTML = '<option value="">Выберите пользователя</option>';
         users.forEach(u => {
             const opt = document.createElement('option');
@@ -108,7 +109,8 @@
     // Загружаем сенсоры
     async function loadSensors() {
         const res = await fetch(sensorsUrl);
-        const sensors = await res.json();
+        const data = await res.json();
+        const sensors = data.content || data;
         tableBody.innerHTML = '';
         sensors.forEach(s => {
             const tr = document.createElement('tr');

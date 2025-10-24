@@ -24,6 +24,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    @Cacheable("users")
     public List<User> getAll() {
         return userRepository.findAll();
     }
@@ -33,18 +34,18 @@ public class UserService {
     }
     
     @Transactional
-    @CacheEvict(value = "users", allEntries = true)
+    @CacheEvict(value = "user", allEntries = true)
     public User create(User user) {
         return userRepository.save(user);
     }
 
-    @Cacheable(value = "users", key ="#id")
+    @Cacheable(value = "user", key ="#id")
     public Optional<User> getById(Long id){
         return userRepository.findById(id);
     }
 
     @Transactional
-    @CachePut(value = "users", key = "#id")
+    @CacheEvict(value = "user", key = "#id")
     public Optional<User> update(Long id, User userDetails) {
         return userRepository.findById(id).map(user -> {
             user.setUsername(userDetails.getUsername());
@@ -56,7 +57,7 @@ public class UserService {
     }
 
     @Transactional
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "user", key = "#id", allEntries = true)
     public boolean deleteById(Long id) {
         if(userRepository.existsById(id)) {
             userRepository.deleteById(id);
