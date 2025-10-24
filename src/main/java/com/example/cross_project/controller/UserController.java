@@ -3,10 +3,13 @@ package com.example.cross_project.controller;
 import com.example.cross_project.model.*;
 import com.example.cross_project.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +30,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    
     @GetMapping("/users")
-    public List<User> getAllUsers(){
-        return userService.getAll();
-    }
+    public Page<User> getAllUsers(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
+            return userService.getAllPaged(page, size);
+        }
     
     @GetMapping("/users/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
@@ -40,13 +46,13 @@ public class UserController {
     }
 
     @PostMapping("/users")
-    public ResponseEntity<User> createUser(@RequestBody User user){
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user){
         User created = userService.create(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
     
     @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@Valid @PathVariable Long id, @RequestBody User user) {
         return userService.update(id, user)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
