@@ -44,7 +44,7 @@ public class Alert {
     @Enumerated(EnumType.STRING)
     private EventType type;
 
-    @NotNull(message = "Timestamp is required")
+    @NotNull(message = "Timetamp is required")
     private LocalDateTime timetamp;
 
     @NotBlank(message = "Description cannot be blank")

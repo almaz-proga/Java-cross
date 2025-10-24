@@ -118,7 +118,8 @@
 
     async function loadSensors() {
         const res = await fetch(sensorsUrl);
-        const sensors = await res.json();
+        const data = await res.json();
+        const sensors = await data.content || data;
         sensorSelect.innerHTML = '<option value="">Выберите сенсор</option>';
         sensors.forEach(s => {
             const opt = document.createElement('option');
@@ -130,7 +131,8 @@
 
     async function loadAlerts() {
         const res = await fetch(apiUrl);
-        const alerts = await res.json();
+        const data = await res.json();
+        const alerts = await data.content || data; 
         tableBody.innerHTML = '';
         alerts.forEach(a => {
             const tr = document.createElement('tr');
@@ -141,7 +143,7 @@
                 <td>${a.description}</td>
                 <td>${a.status}</td>
                 <td>${a.photoUrls ? a.photoUrls.join(', ') : '-'}</td>
-                <td>${a.timestamp ? a.timestamp.replace('T', ' ') : '-'}</td>
+                <td>${a.timetamp ? a.timetamp.replace('T', ' ') : '-'}</td>
                 <td>
                     <button onclick="editAlert(${a.id})">✏️</button>
                     <button class="delete" onclick="deleteAlert(${a.id})">🗑️</button>
@@ -176,7 +178,7 @@
             status: statusSelect.value,
             description: descInput.value,
             photoUrls: photoInput.value ? photoInput.value.split(',').map(s => s.trim()) : [],
-            timestamp: new Date().toISOString()
+            timetamp: new Date().toISOString()
         };
 
         if (idInput.value) {

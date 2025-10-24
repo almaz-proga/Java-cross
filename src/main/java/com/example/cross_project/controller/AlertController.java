@@ -10,6 +10,7 @@ import com.example.cross_project.service.AlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 
 
@@ -28,9 +30,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class AlertController {
      private final AlertService alertService;
 
-    @GetMapping("/alerts")
-    public List<Alert> getAllAlerts(){
-        return alertService.getAll();
+     @GetMapping("/alerts")
+    public Page<Alert> getAllAlerts(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
+            return alertService.getAllPaged(page, size);
     }
 
     @GetMapping("/alerts/{id}")

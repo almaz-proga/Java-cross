@@ -111,7 +111,8 @@
 
     async function loadUsers() {
         const res = await fetch(apiUrl);
-        const users = await res.json();
+        const data = await res.json();
+        const users = data.content || data; // поддержка и Page, и обычного списка
         tableBody.innerHTML = '';
         users.forEach(u => {
             const tr = document.createElement('tr');
