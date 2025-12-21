@@ -1,4 +1,4 @@
-package com.example.cross_project.model;
+package com.example.cross_project.enums;
 
 public enum StatusType {
     NEW,

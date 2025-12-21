@@ -4,6 +4,7 @@ package com.example.cross_project.model;
 import java.util.Set;
 
 import org.springframework.cglib.core.Local;
+import org.springframework.security.core.GrantedAuthority;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,11 +23,18 @@ import jakarta.persistence.Table;
 @Data
 @Entity
 @Table(name = "permissions")
-public class Permission {
+public class Permission implements GrantedAuthority {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
     private String title;
+
+    private String resource;
+    private String opeation;
+    @Override
+    public String getAuthority(){
+        return String.format("%s:%", resource.toUpperCase(), opeation.toUpperCase());
+    }
 }
