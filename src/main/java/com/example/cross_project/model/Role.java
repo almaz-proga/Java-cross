@@ -2,6 +2,8 @@ package com.example.cross_project.model;
 
 import java.util.Set;
 
+import org.springframework.security.core.GrantedAuthority;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -24,7 +26,7 @@ import jakarta.persistence.Table;
 @Data
 @Entity
 @Table(name = "roles")
-public class Role {
+public class Role implements GrantedAuthority{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -39,4 +41,9 @@ public class Role {
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private Set<Permission> permissions;
+
+    @Override
+    public String getAuthority(){
+        return this.title.toUpperCase();
+    }
 }

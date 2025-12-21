@@ -6,6 +6,9 @@ import java.util.Set;
 
 import org.springframework.cglib.core.Local;
 
+import com.example.cross_project.enums.StatusType;
+import com.example.cross_project.enums.EventType;
+
 import jakarta.persistence.Table;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;

@@ -1,8 +1,13 @@
 package com.example.cross_project.model;
 
+import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.HashSet;
 
 import org.hibernate.annotations.ManyToAny;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.CascadeType;
@@ -49,4 +54,14 @@ public class User {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
+
+    /* 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        Set<String> authorities = new HashSet<>();
+        role.getPermissions().forEach(p -> authorities.add(p.getAuthority()));
+        authorities.add(role.getAuthority());
+        return authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet()); 
+    }
+    */
 }

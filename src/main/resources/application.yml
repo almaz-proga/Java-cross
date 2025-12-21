@@ -9,7 +9,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/cross_project
     username: postgres
-    password: 26042005g
+    password: student321
     driver-class-name: org.postgresql.Driver
 
   jpa:
