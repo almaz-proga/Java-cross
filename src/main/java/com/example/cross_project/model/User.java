@@ -8,6 +8,7 @@ import java.util.HashSet;
 import org.hibernate.annotations.ManyToAny;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.CascadeType;
@@ -34,7 +35,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -55,7 +56,8 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    /* 
+    @OneToMany(mappedBy = "user")
+    private Set<Token> tokens;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<String> authorities = new HashSet<>();
@@ -63,5 +65,5 @@ public class User {
         authorities.add(role.getAuthority());
         return authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet()); 
     }
-    */
+    
 }
