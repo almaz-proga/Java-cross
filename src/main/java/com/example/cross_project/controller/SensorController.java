@@ -2,7 +2,6 @@ package com.example.cross_project.controller;
 
 import com.example.cross_project.model.Sensor;
 import com.example.cross_project.service.SensorService;
-import com.example.cross_project.controller.UserController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 

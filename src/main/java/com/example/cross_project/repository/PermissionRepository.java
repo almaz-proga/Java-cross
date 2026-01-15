@@ -9,5 +9,5 @@ import com.example.cross_project.model.Permission;
 
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
-    Optional<Permission> findByTitle(String title);
+    Optional<Permission> findByResourceAndOperation(String resource, String operation);
 }

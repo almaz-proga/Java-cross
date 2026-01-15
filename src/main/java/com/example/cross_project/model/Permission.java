@@ -33,6 +33,8 @@ public class Permission implements GrantedAuthority {
 
     private String resource;
     private String opeation;
+    @ManyToMany(mappedBy = "permissions")
+    private Set<Role> roles;
     @Override
     public String getAuthority(){
         return String.format("%s:%", resource.toUpperCase(), opeation.toUpperCase());

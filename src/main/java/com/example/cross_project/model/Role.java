@@ -41,6 +41,9 @@ public class Role implements GrantedAuthority{
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private Set<Permission> permissions;
+    
+    @OneToMany()
+    private Set<User> users;
 
     @Override
     public String getAuthority(){
