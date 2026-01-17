@@ -43,14 +43,14 @@ public class AuthenticationService {
     public final AuthenticationManager authenticationManager;
     public final JwtTokenProvider jwtTokenProvider;
 
-    @Value("${jwt.access.duration.second}")
+    @Value("${jwt.access.duration.seconds}")
     private long accessTokenDurationSecond;
-    @Value("${jwt.access.duration.minute}")
+    @Value("${jwt.access.duration.minutes}")
     private long accessTokenDurationMinute;
 
-    @Value("${jwt.refresh.duration.second}")
+    @Value("${jwt.refresh.duration.seconds}")
     private long refreshTokenDurationSecond;
-    @Value("${jwt.refresh.duration.day}")
+    @Value("${jwt.refresh.duration.days}")
     private long refreshTokenDurationDay;
 
     private void addAccessTokenCookie(HttpHeaders headers, Token token){
@@ -115,7 +115,7 @@ public class AuthenticationService {
         LoginResponse loginResponse = new LoginResponse(true, user.getRole().getTitle());
         return ResponseEntity.ok().headers(headers).body(loginResponse);
     }
-    public ResponseEntity<LoginResponse> logout(String access, String refresh) {
+    public ResponseEntity<LoginResponse> logout(String access) {
         SecurityContextHolder.clearContext();
         User user = userService.getUser(jwtTokenProvider.getUsername(access));
         revokeAllTokens(user);
@@ -133,6 +133,6 @@ public class AuthenticationService {
         User user = userService.getUser(auth.getName());
         return UserMapper.userToLoggedDTO(user);
     }
-
+    
 }
 
