@@ -61,7 +61,7 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<String> authorities = new HashSet<>();
-        role.getPermissions().forEach(p -> authorities.add(p.getAuthority()));
+        this.role.getPermissions().forEach(p -> authorities.add(p.getAuthority()));
         authorities.add(role.getAuthority());
         return authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet()); 
     }

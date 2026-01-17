@@ -30,7 +30,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    private static final String[] ALLOWED_URLS = { "/swagger-ui/**", "v3/api-docs/**"};
+    private static final String[] ALLOWED_URLS = { "/swagger-ui/**", "/v3/api-docs/**" };
     private final JwtAuthFilter jwtAuthFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     @Bean
