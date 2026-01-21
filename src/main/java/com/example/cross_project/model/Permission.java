@@ -22,7 +22,6 @@ import jakarta.persistence.Table;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "permissions")
 public class Permission implements GrantedAuthority {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +36,19 @@ public class Permission implements GrantedAuthority {
     private Set<Role> roles;
     @Override
     public String getAuthority(){
-        return String.format("%s:%", resource.toUpperCase(), operation.toUpperCase());
+        return String.format("%s:%s", resource.toUpperCase(), operation.toUpperCase());
+    }
+    // Добавил методы для избежания ошибки
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Permission)) return false;
+        Permission that = (Permission) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

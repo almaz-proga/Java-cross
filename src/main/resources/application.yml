@@ -36,3 +36,7 @@ jwt:
             days: 7
             seconds: 604800
         cookie-name: refresh-token
+        
+logging:
+  level:
+    org.springframework.security: DEBUG

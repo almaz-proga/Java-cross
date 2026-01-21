@@ -1,4 +1,4 @@
-/* 
+
 package com.example.cross_project.controller;
 
 import com.example.cross_project.model.*;
@@ -65,4 +65,3 @@ public class UserController {
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
-*/
