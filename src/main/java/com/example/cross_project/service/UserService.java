@@ -50,5 +50,42 @@ public class UserService {
     public void saveUser(User user){
         userRepository.save(user);
     }
+
+    public Page<User> getAllPaged(int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findAll(pageable);
+    }
+
+    @Cacheable(value = "users", key ="#id")
+    public Optional<User> getById(Long id){
+        return userRepository.findById(id);
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
+    public User create(User user) {
+        return userRepository.save(user);
+    }
+    @Transactional
+    @CachePut(value = "users", key = "#id")
+    public Optional<User> update(Long id, User userDetails) {
+        return userRepository.findById(id).map(user -> {
+            user.setUsername(userDetails.getUsername());
+            user.setPassword(userDetails.getPassword());
+            user.setEnabled(userDetails.isEnabled());
+            user.setRole(userDetails.getRole());
+            return userRepository.save(user);
+        });
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", key = "#id")
+    public boolean deleteById(Long id) {
+        if(userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
 }
 

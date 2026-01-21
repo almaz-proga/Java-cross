@@ -41,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
-        if (token == "" || !jwtTokenProvider.isValid(token)) {
+        if (token.equals("") || !jwtTokenProvider.isValid(token)) {
             filterChain.doFilter(request, response);
             return;
         }

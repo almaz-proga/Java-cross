@@ -49,15 +49,16 @@ public class User implements UserDetails {
     private String password;
 
     @NotNull
-    private boolean enabled = true;
+    private boolean enabled;
 
     @NotNull(message = "role is required")
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
 
     @OneToMany(mappedBy = "user")
     private Set<Token> tokens;
+    
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<String> authorities = new HashSet<>();

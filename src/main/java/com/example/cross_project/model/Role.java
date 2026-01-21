@@ -25,7 +25,6 @@ import jakarta.persistence.Table;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "roles")
 public class Role implements GrantedAuthority{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,7 +35,7 @@ public class Role implements GrantedAuthority{
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "role_permissions",
+        name = "role_permission",
         joinColumns = @JoinColumn(name = "role_id"),
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
@@ -47,6 +46,20 @@ public class Role implements GrantedAuthority{
 
     @Override
     public String getAuthority(){
-        return this.title.toUpperCase();
+        return this.title.toUpperCase();   
     }
+    // Добавил методы для избежания ошибки
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Role)) return false;
+        Role that = (Role) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
 }
