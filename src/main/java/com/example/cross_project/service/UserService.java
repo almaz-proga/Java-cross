@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -13,8 +14,12 @@ import org.springframework.stereotype.Service;
 
 import com.example.cross_project.mapper.UserMapper;
 import com.example.cross_project.dto.UserDTO;
+import com.example.cross_project.dto.UserLogged;
 import com.example.cross_project.exeptions.ResourceNotFoundException;
 import com.example.cross_project.model.User;
+import com.example.cross_project.model.Role;
+
+import com.example.cross_project.repository.RoleRepository;
 import com.example.cross_project.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
@@ -23,7 +28,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Service
 public class UserService {
+
+    private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     public User getUser(String username) {
         User user = userRepository.findByUsername(username)
@@ -31,52 +39,59 @@ public class UserService {
                 return user;
     }
 
-    public List<UserDTO> getUsers(){
-        return userRepository.findAll().stream().map(UserMapper::userToUserDTO).toList(); 
+    public List<UserLogged> getUsers(){
+        return userRepository.findAll().stream().map(UserMapper::userToLoggedDTO).toList(); 
     }
     
-    public UserDTO getUserDto(Long id) {
+    public UserLogged getUserDto(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + "not found"));
-                return UserMapper.userToUserDTO(user);
+                return UserMapper.userToLoggedDTO(user);
     }
 
-    public UserDTO getUserDto(String username) {
+    public UserLogged getUserDto(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User with username " + username + "not found"));
-                return UserMapper.userToUserDTO(user);
+                return UserMapper.userToLoggedDTO(user);
     }
 
     public void saveUser(User user){
         userRepository.save(user);
     }
 
-    public Page<User> getAllPaged(int page, int size){
-        Pageable pageable = PageRequest.of(page, size);
-        return userRepository.findAll(pageable);
-    }
-
-    @Cacheable(value = "users", key ="#id")
-    public Optional<User> getById(Long id){
-        return userRepository.findById(id);
-    }
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
-    public User create(User user) {
-        return userRepository.save(user);
+    public UserDTO create(UserDTO dto) {
+        Role role = roleRepository.findByTitle(dto.role())
+            .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+        
+        User user = new User();
+        user.setUsername(dto.username());
+        user.setPassword(passwordEncoder.encode(dto.password()));
+        user.setEnabled(true);
+        user.setRole(role);
+
+        return UserMapper.userToUserDTO(userRepository.save(user));
     }
+    
     @Transactional
     @CachePut(value = "users", key = "#id")
-    public Optional<User> update(Long id, User userDetails) {
-        return userRepository.findById(id).map(user -> {
-            user.setUsername(userDetails.getUsername());
-            user.setPassword(userDetails.getPassword());
-            user.setEnabled(userDetails.isEnabled());
-            user.setRole(userDetails.getRole());
-            return userRepository.save(user);
-        });
-    }
+    public UserDTO update(Long id, UserLogged dto) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + "not found"));
+        user.setUsername(dto.username());
+
+        if (dto.username() != null) {
+            user.setUsername(dto.username());
+        }
+        if (dto.role() != null) {
+            Role role = roleRepository.findByTitle(dto.role())
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+            user.setRole(role);
+        }
+        return UserMapper.userToUserDTO(user);
+        }
 
     @Transactional
     @CacheEvict(value = "users", key = "#id")
