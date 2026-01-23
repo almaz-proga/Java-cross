@@ -21,4 +21,5 @@ public class UserMapper {
             user.getRole().getAuthority(),
             user.getRole().getPermissions().stream().map(Permission::getAuthority).collect(Collectors.toSet()));
     }
+
 }

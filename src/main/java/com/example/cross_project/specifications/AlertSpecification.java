@@ -47,21 +47,13 @@ public class AlertSpecification {
         };
     }
 
-    private static Specification<Alert> photourlLike(List<String> photourl){
-        return (root, query, criterialBuilder) -> {
-            if(photourl == null) {return null;}
-            return criterialBuilder.equal(root.get("photourl"), photourl);  
-        };
-    }
-
-    public static Specification<Alert> filter(Sensor sensor, EventType type, LocalDateTime timetamp, String description, StatusType status, List<String> photourl){
+    public static Specification<Alert> filter(Sensor sensor, EventType type, LocalDateTime timetamp, String description, StatusType status){
         return Specification.allOf(
             sensorLike(sensor),
             typeLike(type),
             timetampLike(timetamp),
             descriptionLike(description),
-            statusLike(status),
-            photourlLike(photourl)
+            statusLike(status)
         );
     }
 }

@@ -1,66 +1,107 @@
 package com.example.cross_project.service;
 
+import java.io.IOException;
+import java.lang.module.ResolutionException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.example.cross_project.enums.EventType;
 import com.example.cross_project.model.Alert;
+import com.example.cross_project.model.Sensor;
+import com.example.cross_project.dto.AlertRequest;
+import com.example.cross_project.dto.AlertResponse;
+import com.example.cross_project.enums.StatusType;
+import com.example.cross_project.exeptions.ResourceNotFoundException;
+import com.example.cross_project.mapper.AlertMapper;
 import com.example.cross_project.repository.AlertRepository;
+import com.example.cross_project.repository.SensorRepository;
+import com.example.cross_project.specifications.AlertSpecification;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Service
 public class AlertService {
     
     private final AlertRepository alertRepository;
+    private final SensorRepository sensorRepository;
 
-    public AlertService(AlertRepository alertRepository){
-        this.alertRepository = alertRepository;
-    }
 
     @Cacheable("alerts")
-    public List<Alert> getAll(){
-        return alertRepository.findAll();
+    public List<AlertResponse> getAll(){
+        return alertRepository.findAll().stream().map(AlertMapper::alertToResponseDTO).toList();
     }
 
-    public List<Alert> getAllBySensor(Long sensorId){
-        return alertRepository.findAllBySensor_Id(sensorId);
+
+    public List<AlertResponse> getAllByStatus(StatusType statusType){
+        List<Alert> alerts = alertRepository.findAllByStatus(statusType);
+        if(alerts.isEmpty()){
+            throw new ResolutionException("Alerts with status " + statusType + "not found");
+        }
+        return alerts.stream().map(AlertMapper::alertToResponseDTO).toList();
     }
 
     @Cacheable(value = "alert", key = "#id")
-    public Optional<Alert> getById(Long id){
-        return alertRepository.findById(id);
+    public AlertResponse getById(Long id){
+        Alert alert = alertRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert with id" + id + "not found"));
+        return AlertMapper.alertToResponseDTO(alert);
     }
 
     @Transactional
     @CacheEvict(value = "alert", allEntries = true)
-    public Alert create(Alert alert){
-        System.out.println("⚙️ Создание alert: " + alert);
-        if (alert.getTimetamp() == null) {
-            alert.setTimetamp(LocalDateTime.now());
-        }
-        return alertRepository.save(alert);
+    public AlertResponse create(AlertRequest dto) {
+        Sensor sensor = sensorRepository.findById(dto.sensorId())
+                .orElseThrow(() -> new ResourceNotFoundException("Sensor with id " + dto.sensorId() + " not found"));
+
+        Alert alert = new Alert();
+        alert.setSensor(sensor);
+        alert.setType(dto.type());
+        alert.setDescription(dto.description());
+        alert.setPhotoUrls(dto.photoUrls());
+        alert.setStatus(StatusType.NEW);
+        alert.setTimetamp(LocalDateTime.now());
+
+        return AlertMapper.alertToResponseDTO(alertRepository.save(alert));
     }
 
     @Transactional
     @CacheEvict(value = "alert", key ="#id", allEntries = true)
-    public Optional<Alert> update(Long id, Alert alertDetails){
-        return alertRepository.findById(id).map(alert -> {
-            alert.setSensor(alertDetails.getSensor());
-            alert.setType(alertDetails.getType());
-            alert.setTimetamp(LocalDateTime.now());
-            alert.setDescription(alertDetails.getDescription());
-            alert.setStatus(alertDetails.getStatus());
-            alert.setPhotoUrls(alertDetails.getPhotoUrls());
-            return alertRepository.save(alert);
-        });
+    public AlertResponse update(Long id, AlertRequest dto) {
+        Alert alert = alertRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert with id " + id + " not found"));
+
+        if (dto.sensorId() != null) {
+            Sensor sensor = sensorRepository.findById(dto.sensorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Sensor with id " + dto.sensorId() + " not found"));
+            alert.setSensor(sensor);
+        }
+
+        if (dto.type() != null) alert.setType(dto.type());
+        if (dto.description() != null) alert.setDescription(dto.description());
+        if (dto.photoUrls() != null) alert.setPhotoUrls(dto.photoUrls());
+
+
+        alert.setTimetamp(LocalDateTime.now());
+
+        return AlertMapper.alertToResponseDTO(alertRepository.save(alert));
     }
 
     @Transactional
@@ -73,8 +114,57 @@ public class AlertService {
         return false;
     }
 
-    public Page<Alert> getAllPaged(int page, int size){
+    public Page<AlertResponse> getAllPaged(int page, int size){
         Pageable pageable = PageRequest.of(page, size);
-        return alertRepository.findAll(pageable);
+        return alertRepository.findAll(pageable).map(AlertMapper::alertToResponseDTO);
+    }
+    
+    public Page<AlertResponse> filter(Long sensorId,
+        EventType type, LocalDateTime timetamp, String description, StatusType statusType,
+        int page, int size){
+            Pageable pageable = PageRequest.of(page, size);
+            Sensor sensor = null;
+            if(sensorId != null) {
+                sensor = sensorRepository.findById(sensorId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Sensor with id" + sensorId + "not found"));
+            }
+            Specification<Alert> spec = AlertSpecification.filter(
+                sensor, type, timetamp, description, statusType);
+        return alertRepository.findAll(spec, pageable).map(AlertMapper::alertToResponseDTO);
+    }
+    @Transactional
+    public AlertResponse changeStatus(Long alertId, StatusType newStatus) {
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found"));
+
+        alert.setStatus(newStatus);
+        return AlertMapper.alertToResponseDTO(alertRepository.save(alert));
+    }
+
+    @Transactional
+    public AlertResponse uploadFiles(Long alertId, List<MultipartFile> files) throws IOException {
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found"));
+
+        if (alert.getPhotoUrls() == null) {
+            alert.setPhotoUrls(new ArrayList<>());
+        }
+
+        for (MultipartFile file : files) {
+            String mimeType = file.getContentType();
+            if (!List.of("image/jpeg", "image/png", "image/webp").contains(mimeType)) {
+                throw new IllegalArgumentException("Invalid file type: " + mimeType);
+            }
+
+            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path path = Paths.get("uploads").resolve(filename);
+
+            Files.createDirectories(path.getParent());
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+            alert.getPhotoUrls().add("/uploads/" + filename);
+        }
+
+        return AlertMapper.alertToResponseDTO(alertRepository.save(alert));
     }
 }

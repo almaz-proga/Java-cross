@@ -2,6 +2,8 @@
 package com.example.cross_project.controller;
 
 import com.example.cross_project.model.*;
+import com.example.cross_project.dto.UserDTO;
+import com.example.cross_project.dto.UserLogged;
 import com.example.cross_project.service.UserService;
 
 import jakarta.validation.Valid;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,33 +36,32 @@ public class UserController {
     private final UserService userService;
     
     @GetMapping("/users")
-    public Page<User> getAllUsers(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) {
-            return userService.getAllPaged(page, size);
+    @PreAuthorize("hasAuthority('USER:READ')")
+    public List<UserLogged> getAllUsers(){
+            return userService.getUsers();
         }
     
     @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasAuthority('USER:READ')")
+    public ResponseEntity<UserLogged> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserDto(id));
     }
 
     @PostMapping("/users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user){
-        User created = userService.create(user);
+    @PreAuthorize("hasAuthority('ADMIN:WRITE')")
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO dto){
+        UserDTO created = userService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
     
     @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@Valid @PathVariable Long id, @RequestBody User user) {
-        return userService.update(id, user)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasAuthority('ADMIN:WRITE')")
+    public ResponseEntity<UserDTO> updateUser(@Valid @PathVariable Long id, @RequestBody UserLogged dto) {
+        return ResponseEntity.ok(userService.update(id,dto));
     }
 
     @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasAuthority('ADMIN:WRITE')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         boolean deleted = userService.deleteById(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
