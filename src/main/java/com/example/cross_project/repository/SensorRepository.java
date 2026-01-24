@@ -12,5 +12,6 @@ public interface SensorRepository extends
     JpaRepository<Sensor, Long>{
     List<Sensor> findByModelStartingWithIgnoreCase(String model);
     List<Sensor> findAllByModel(String model);
+    
 }
     

@@ -48,6 +48,7 @@ public class Role implements GrantedAuthority{
     public String getAuthority(){
         return this.title.toUpperCase();   
     }
+    
     // Добавил методы для избежания ошибки
     @Override
     public boolean equals(Object o) {

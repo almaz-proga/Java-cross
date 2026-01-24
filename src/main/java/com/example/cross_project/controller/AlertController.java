@@ -18,6 +18,7 @@ import com.example.cross_project.service.AlertService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -37,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 
 
-
+@Tag(name = "Alerts", description = "Управление инцидентами системы")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -46,25 +47,30 @@ public class AlertController {
 
     @GetMapping("/alerts")
     @PreAuthorize("hasAuthority('USER:READ')")
+    @Operation(summary = "Получить инцидент по фильтру", description = "Возвращает инциденты по критиериям")
     public Page<AlertResponse> filterAlerts(
         @RequestParam(required = false) Long sensorId,
         @RequestParam(required = false) EventType type,
         @RequestParam(required = false) LocalDateTime timetamp,
         @RequestParam(required = false) StatusType statusType,
         @RequestParam(required = false) String description,
+        @Parameter(description = "Номер страницы", example = "0")
         @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Количество элементов на странице", example = "10")
         @RequestParam(defaultValue = "10") int size) {
            return alertService.filter(sensorId, type, timetamp, description, statusType, page, size);
     }
     
     @GetMapping("/alerts/{id}")
     @PreAuthorize("hasAuthority('USER:READ')")
+    @Operation(summary = "Получить инцидент по ID", description = "Возвращает детальную информацию об инциденте")
     public ResponseEntity<AlertResponse> getAlertById(@PathVariable Long id) {
         return ResponseEntity.ok(alertService.getById(id));
     }
     
     @PostMapping("/alerts")
     @PreAuthorize("hasAuthority('ADMIN:WRITE')")
+    @Operation(summary = "Создать новый инцидент", description = "Создает новый инцидент с описанием и типом")
     public ResponseEntity<AlertResponse> createAlert(@Valid @RequestBody AlertRequest alert) {
         AlertResponse created = alertService.create(alert);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -72,7 +78,7 @@ public class AlertController {
     
     @PostMapping(value = "/alerts/{id}/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ADMIN:WRITE')")
-    @Operation(summary = "Добавить фото к алерту", description = "Можно загрузить несколько изображений")
+    @Operation(summary = "Добавить фото к инциденту", description = "Можно загрузить несколько изображений")
     public ResponseEntity<AlertResponse> uploadAlerPhotos(
         @PathVariable Long id, @RequestPart("file") MultipartFile[] files
     ) throws IOException {
@@ -81,18 +87,21 @@ public class AlertController {
 
     @PutMapping("/alerts/{id}")
     @PreAuthorize("hasAuthority('ADMIN:WRITE')")
+    @Operation(summary = "Обновить инцидент", description = "Изменяет информацию об инциденте")
     public ResponseEntity<AlertResponse> updateAlert(@PathVariable Long id, @RequestBody AlertRequest alert){
         return ResponseEntity.ok(alertService.update(id, alert));
     }
 
     @PutMapping("/alerts/{id}/status_change")
     @PreAuthorize("hasAuthority('ADMIN:WRITE')")
+    @Operation(summary = "Обновить статус инцидента", description = "Изменяет информацию о статусе инцидента")
     public ResponseEntity<AlertResponse> changeStatus(@PathVariable Long id, @RequestParam StatusType status) {
         return ResponseEntity.ok(alertService.changeStatus(id, status));
     }
     
     @DeleteMapping("/alerts/{id}")
     @PreAuthorize("hasAuthority('ADMIN:WRITE')")
+    @Operation(summary = "Удалить инцидент", description = "Удаляет инцидент по идентификатору")
     public ResponseEntity<Void> deleteAlert(@PathVariable Long id){
         boolean deleted = alertService.deleteById(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
