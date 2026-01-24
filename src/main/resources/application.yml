@@ -46,8 +46,26 @@ jwt:
         
 logging:
   level:
-    org.springframework.security: DEBUG
+    root: INFO
+    com.example.cross_project: DEBUG 
+    org.springframework: WARN         
+    org.hibernate: INFO
+  file:
+    name: logs/cross-project.log      
+    max-size: 10MB                     
+    max-history: 30                     
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %cyan(%logger{36}) - %level - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %level - %msg%n"
 
 file:
   upload:
     dir: ./uploads
+    
+telegram:
+  bot:
+    token: "5406798562:AAGsKqSsApGWe19tu2ZXd6Mt2GJXn9OEJiY"
+    chat-id: "692770192"
+    
+report:
+  template-location: classpath:templates/alert_template.xlsx

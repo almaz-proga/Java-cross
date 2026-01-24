@@ -61,6 +61,5 @@ public class Alert {
     @CollectionTable(name = "alert_photos", joinColumns = @JoinColumn(name = "alert_id"))
     @Column(name = "photo_url")
     private List<String> photoUrls;
-    
 }
 

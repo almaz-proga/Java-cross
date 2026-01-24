@@ -21,9 +21,11 @@ import com.example.cross_project.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class SensorService {
 
     private final SensorRepository sensorRepository;
@@ -31,21 +33,43 @@ public class SensorService {
 
     @Cacheable("sensors")
     public List<SensorResponse> getAll(){
-        return sensorRepository.findAll().stream().map(SensorMapper::sensorToResponseDTO).toList();
+        log.info("Fetching all sensors");
+
+        List<SensorResponse> sensors = sensorRepository.findAll().stream()
+            .map(SensorMapper::sensorToResponseDTO).toList();
+
+        log.info("{} sensors fetched", sensors.size());
+        return sensors;
     }
 
     public List<SensorResponse> getAllByModel(String model){
+        log.info("Fetching sensors by model='{}'", model);
+
         List<Sensor> sensors = sensorRepository.findAllByModel(model);
+
         if (sensors.isEmpty()) {
-            throw new ResourceNotFoundException("Sensors with model " + model + " not found");
+            log.warn("Sensors with model='{}' not found", model);
+            throw new ResourceNotFoundException(
+                "Sensors with model " + model + " not found"
+            );
         }
-            return sensors.stream().map(SensorMapper::sensorToResponseDTO).toList();
+
+        log.info("{} sensors found for model='{}'", sensors.size(), model);
+        return sensors.stream().map(SensorMapper::sensorToResponseDTO).toList();
     }
 
     @Cacheable(value = "sensor", key = "#id")
     public SensorResponse getById(Long id){
-        Sensor sensor = sensorRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Sensor with id " + id + "not found"));
+        log.debug("Fetching sensor by id={}", id);
+         Sensor sensor = sensorRepository.findById(id)
+            .orElseThrow(() -> {
+                log.warn("Sensor with id={} not found", id);
+                return new ResourceNotFoundException(
+                    "Sensor with id " + id + " not found"
+                );
+            });
+
+        log.debug("Sensor found: id={}, model={}", sensor.getId(), sensor.getModel());
         return SensorMapper.sensorToResponseDTO(sensor);
         
     }
@@ -91,28 +115,48 @@ public class SensorService {
     @Transactional
     @CacheEvict(value = "sensor", key="#id", allEntries = true)
     public boolean deleteById(Long id){
-        if(sensorRepository.existsById(id)) {
+        log.info("Attempting to delete sensor id={}", id);
+
+        if (sensorRepository.existsById(id)) {
             sensorRepository.deleteById(id);
+            log.info("Sensor id={} deleted", id);
             return true;
         }
+
+        log.warn("Cannot delete sensor id={} - not found", id);
         return false;
     }
 
     public Page<SensorResponse> getAllPaged(int page, int size){
+       log.info("Fetching sensors page={}, size={}", page, size);
+
         Pageable pageable = PageRequest.of(page, size);
-        return sensorRepository.findAll(pageable).map(SensorMapper::sensorToResponseDTO);
+        Page<SensorResponse> result =
+                sensorRepository.findAll(pageable).map(SensorMapper::sensorToResponseDTO);
+
+        log.info("Page fetched: {} sensors", result.getNumberOfElements());
+        return result;
     }
     
     @Transactional
     public SensorResponse assignResponsible(Long sensorId, Long userId) {
-    Sensor sensor = sensorRepository.findById(sensorId)
-            .orElseThrow(() -> new ResourceNotFoundException("Sensor not found"));
+    log.info("Assigning user id={} to sensor id={}", userId, sensorId);
+
+    Sensor sensor = sensorRepository.findById(sensorId).orElseThrow(() -> {
+                log.warn("Sensor id={} not found", sensorId);
+                return new ResourceNotFoundException("Sensor not found");
+            });
 
     User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            .orElseThrow(() -> {
+                log.warn("User id={} not found", userId);
+                return new ResourceNotFoundException("User not found");
+            });
 
     sensor.setAssingnedTo(user);
+    Sensor saved = sensorRepository.save(sensor);
 
-    return SensorMapper.sensorToResponseDTO(sensorRepository.save(sensor));
+    log.info("User id={} assigned to sensor id={}", userId, sensorId);
+    return SensorMapper.sensorToResponseDTO(saved);
 }
 }

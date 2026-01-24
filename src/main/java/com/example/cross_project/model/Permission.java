@@ -38,6 +38,7 @@ public class Permission implements GrantedAuthority {
     public String getAuthority(){
         return String.format("%s:%s", resource.toUpperCase(), operation.toUpperCase());
     }
+    
     // Добавил методы для избежания ошибки
     @Override
     public boolean equals(Object o) {
